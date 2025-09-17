@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Play, Download, RotateCcw, Sparkles, Image, Video, MessageSquare, Plus, History, Settings, Menu, X } from 'lucide-react';
+import { useUI } from './context/UIContext';
 
 type AppState = 'input' | 'loading' | 'results';
 
@@ -21,12 +22,14 @@ function App() {
   const [userPhoto, setUserPhoto] = useState<UploadedFile | null>(null);
   const [eventPhotos, setEventPhotos] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarOpen, closeSidebar, toggleSidebar } = useUI();
+
   const [chatSessions] = useState<ChatSession[]>([
     { id: '1', title: 'Wedding Recreation', timestamp: new Date(2024, 11, 15), description: 'Beautiful wedding ceremony at sunset' },
     { id: '2', title: 'Birthday Party', timestamp: new Date(2024, 11, 10), description: 'Kids birthday party with cake and balloons' },
     { id: '3', title: 'Concert Experience', timestamp: new Date(2024, 11, 5), description: 'Rock concert with amazing light show' },
   ]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const eventInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,9 +84,21 @@ function App() {
     setEventPhotos([]);
   };
 
-  const removeEventPhoto = (index: number) => {
-    setEventPhotos(prev => prev.filter((_, i) => i !== index));
-  };
+  // If needed later: utility to remove an event photo by index
+  // const removeEventPhoto = (index: number) => {
+  //   setEventPhotos(prev => prev.filter((_, i) => i !== index));
+  // };
+
+  // Close sidebar with Escape key
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen) {
+        closeSidebar();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [sidebarOpen, closeSidebar]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden flex">
@@ -108,7 +123,13 @@ function App() {
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
+      <div
+        id="chat-history-panel"
+        role="complementary"
+        aria-label="Chat history"
+        className={`fixed inset-y-0 left-0 z-50 w-80 bg-black/20 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        aria-hidden={!sidebarOpen && undefined}
+      >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="p-6 border-b border-white/10">
@@ -118,8 +139,9 @@ function App() {
                 <h2 className="text-lg font-semibold text-white">AI Recreator</h2>
               </div>
               <button
-                onClick={() => setSidebarOpen(false)}
+                onClick={closeSidebar}
                 className="lg:hidden text-gray-400 hover:text-white transition-colors"
+                aria-label="Close chat history"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -169,14 +191,21 @@ function App() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile Header */}
-        <header className="lg:hidden p-4 border-b border-white/10 bg-black/20 backdrop-blur-xl">
+        {/* Top Header (Now also on desktop) */}
+        <header className="p-4 border-b border-white/10 bg-black/20 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setSidebarOpen(true)}
+              onClick={toggleSidebar}
               className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Toggle chat history"
+              aria-expanded={sidebarOpen}
+              aria-controls="chat-history-panel"
             >
-              <Menu className="h-6 w-6" />
+              {sidebarOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-cyan-400" />
@@ -394,24 +423,19 @@ function App() {
             <a href="#" className="hover:text-cyan-400 transition-colors duration-200">Contact</a>
           </div>
           <p className="text-gray-500 text-xs mt-2">
-            © 2025 AI Event Recreator. Powered by advanced AI technology.
+            © {new Date().getFullYear()} AI Event Recreator. All rights reserved.
           </p>
         </footer>
       </div>
 
-      {/* Sidebar Overlay for Mobile */}
+      {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Overlay for Mobile */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={closeSidebar}
+          role="button"
+          aria-label="Close sidebar overlay"
+          tabIndex={-1}
         />
       )}
     </div>
