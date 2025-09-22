@@ -26,6 +26,7 @@ function App() {
 
   const [generatedScript, setGeneratedScript] = useState('');
   const [isEditingScript, setIsEditingScript] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<'prep' | 'video'>('prep');
 
   const [chatSessions] = useState<ChatSession[]>([
     { id: '1', title: 'Wedding Recreation', timestamp: new Date(2024, 11, 15), description: 'Beautiful wedding ceremony at sunset' },
@@ -87,6 +88,7 @@ function App() {
   const handleGenerate = () => {
     if (!eventDescription.trim() || !userPhoto || eventPhotos.length === 0) return;
     
+    setLoadingPhase('prep');
     setCurrentState('loading');
     
     // Simulate AI processing
@@ -106,7 +108,12 @@ function App() {
   };
 
   const handleApproveScript = () => {
-    setCurrentState('results');
+    setLoadingPhase('video');
+    setCurrentState('loading');
+    // Simulate video rendering
+    setTimeout(() => {
+      setCurrentState('results');
+    }, 3000);
   };
 
   const handleRestart = () => {
@@ -402,8 +409,14 @@ function App() {
                   ))}
                 </div>
 
-                <h3 className="text-xl font-semibold text-white mb-2">AI is Working Its Magic</h3>
-                <p className="text-gray-300 text-sm">Analyzing your photos and recreating the perfect moment...</p>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {loadingPhase === 'prep' ? 'Analyzing Inputs' : 'Rendering Your Video'}
+                </h3>
+                <p className="text-gray-300 text-sm">
+                  {loadingPhase === 'prep'
+                    ? 'Analyzing your photos and drafting a personalized script...'
+                    : 'Applying effects, transitions, and music to create your video...'}
+                </p>
               </div>
             </div>
           )}
@@ -501,6 +514,13 @@ function App() {
                   >
                     <RotateCcw className="h-5 w-5" />
                     Create Another
+                  </button>
+
+                  <button 
+                    onClick={handleRestart}
+                    className="flex-1 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-semibold hover:bg-white/20 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    Home
                   </button>
                 </div>
               </div>
