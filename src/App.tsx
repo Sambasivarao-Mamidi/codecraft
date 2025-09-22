@@ -27,6 +27,8 @@ function App() {
   const [generatedScript, setGeneratedScript] = useState('');
   const [isEditingScript, setIsEditingScript] = useState(false);
   const [loadingPhase, setLoadingPhase] = useState<'prep' | 'video'>('prep');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsText, setSuggestionsText] = useState('');
 
   const [chatSessions] = useState<ChatSession[]>([
     { id: '1', title: 'Wedding Recreation', timestamp: new Date(2024, 11, 15), description: 'Beautiful wedding ceremony at sunset' },
@@ -114,6 +116,21 @@ function App() {
     setTimeout(() => {
       setCurrentState('results');
     }, 3000);
+  };
+
+  const handleToggleSuggestions = () => {
+    setShowSuggestions(prev => !prev);
+  };
+
+  const handleApplySuggestions = () => {
+    const trimmed = suggestionsText.trim();
+    if (!trimmed) return;
+    // Simulate AI revision by appending a clarified section influenced by suggestions
+    const revised = `${generatedScript}\n\nRevision Notes Applied:\n- ${trimmed.replace(/\n+/g, ' ').trim()}`;
+    setGeneratedScript(revised);
+    setSuggestionsText('');
+    setIsEditingScript(false);
+    setShowSuggestions(true);
   };
 
   const handleCreateAnother = () => {
@@ -444,13 +461,21 @@ function App() {
               <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-gray-300 text-sm">Draft based on your inputs</span>
-                  <button
-                    onClick={handleToggleEdit}
-                    className="py-2 px-3 bg-white/10 border border-white/20 rounded-lg text-white font-medium hover:bg-white/20 transition-all duration-200 flex items-center gap-2 text-sm"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    {isEditingScript ? 'Done Editing' : 'Edit Script'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleToggleSuggestions}
+                      className="py-2 px-3 bg-white/10 border border-white/20 rounded-lg text-white font-medium hover:bg-white/20 transition-all duration-200 text-sm"
+                    >
+                      {showSuggestions ? 'Hide Suggestions' : 'Add Suggestions'}
+                    </button>
+                    <button
+                      onClick={handleToggleEdit}
+                      className="py-2 px-3 bg-white/10 border border-white/20 rounded-lg text-white font-medium hover:bg-white/20 transition-all duration-200 flex items-center gap-2 text-sm"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      {isEditingScript ? 'Done Editing' : 'Edit Script'}
+                    </button>
+                  </div>
                 </div>
 
                 {isEditingScript ? (
@@ -463,6 +488,27 @@ function App() {
                   <pre className="whitespace-pre-wrap text-gray-100 bg-black/30 border border-white/10 rounded-xl p-4 min-h-[220px]">
                     {generatedScript}
                   </pre>
+                )}
+
+                {showSuggestions && (
+                  <div className="mt-4">
+                    <label className="block text-sm text-gray-300 mb-2">Suggest changes (tone, scenes, emphasis):</label>
+                    <textarea
+                      value={suggestionsText}
+                      onChange={(e) => setSuggestionsText(e.target.value)}
+                      placeholder="e.g., Make it more upbeat; add a close with fireworks; emphasize candid smiles"
+                      className="w-full min-h-[120px] px-4 py-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200"
+                    />
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={handleApplySuggestions}
+                        disabled={!suggestionsText.trim()}
+                        className="py-2 px-4 bg-gradient-to-r from-cyan-500 to-violet-500 rounded-lg text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-400 hover:to-violet-400 transition-all duration-200"
+                      >
+                        Apply Suggestions
+                      </button>
+                    </div>
+                  </div>
                 )}
 
                 <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
