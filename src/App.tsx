@@ -116,6 +116,15 @@ function App() {
     }, 3000);
   };
 
+  const handleCreateAnother = () => {
+    // Regenerate another version of the video using existing inputs/script
+    setLoadingPhase('video');
+    setCurrentState('loading');
+    setTimeout(() => {
+      setCurrentState('results');
+    }, 3000);
+  };
+
   const handleRestart = () => {
     setCurrentState('input');
     setEventDescription('');
@@ -509,7 +518,7 @@ function App() {
                   </button>
                   
                   <button 
-                    onClick={handleRestart}
+                    onClick={handleCreateAnother}
                     className="flex-1 py-3 bg-white/10 border border-white/20 rounded-xl text-white font-semibold hover:bg-white/20 transition-all duration-200 flex items-center justify-center gap-2"
                   >
                     <RotateCcw className="h-5 w-5" />
