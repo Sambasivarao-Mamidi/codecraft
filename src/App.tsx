@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Play, Download, RotateCcw, Sparkles, Image, Video, MessageSquare, Plus, History, Settings, Menu, X } from 'lucide-react';
+import { Upload, Play, Download, RotateCcw, Sparkles, Image, Video, MessageSquare, Plus, History, Settings, Menu, X, FileText, Edit3 } from 'lucide-react';
 import { useUI } from './context/UIContext';
 
-type AppState = 'input' | 'loading' | 'results';
+type AppState = 'input' | 'loading' | 'script' | 'results';
 
 interface UploadedFile {
   file: File;
@@ -23,6 +23,9 @@ function App() {
   const [eventPhotos, setEventPhotos] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const { sidebarOpen, closeSidebar, toggleSidebar } = useUI();
+
+  const [generatedScript, setGeneratedScript] = useState('');
+  const [isEditingScript, setIsEditingScript] = useState(false);
 
   const [chatSessions] = useState<ChatSession[]>([
     { id: '1', title: 'Wedding Recreation', timestamp: new Date(2024, 11, 15), description: 'Beautiful wedding ceremony at sunset' },
@@ -66,6 +69,21 @@ function App() {
     handleFileUpload(e.dataTransfer.files, type);
   };
 
+  const generateScriptFromInputs = (): string => {
+    const photoCount = eventPhotos.length;
+    const description = eventDescription.trim();
+    const intro = description
+      ? `Recreating: ${description}`
+      : 'Recreating your special moment';
+    return [
+      `${intro}.`,
+      `Scene 1: A gentle fade-in over ${photoCount} captured memories, highlighting authentic emotions.`,
+      'Scene 2: Subtle parallax on key photos, with warm cinematic color tones.',
+      'Scene 3: Close-up emphasis on the main subject, matched to ambient music beats.',
+      'Outro: Title card with date and a soft vignette, ending on a hopeful note.'
+    ].join('\n');
+  };
+
   const handleGenerate = () => {
     if (!eventDescription.trim() || !userPhoto || eventPhotos.length === 0) return;
     
@@ -73,8 +91,22 @@ function App() {
     
     // Simulate AI processing
     setTimeout(() => {
-      setCurrentState('results');
+      setGeneratedScript(generateScriptFromInputs());
+      setIsEditingScript(false);
+      setCurrentState('script');
     }, 3000);
+  };
+
+  const handleRegenerateScript = () => {
+    setGeneratedScript(generateScriptFromInputs());
+  };
+
+  const handleToggleEdit = () => {
+    setIsEditingScript(prev => !prev);
+  };
+
+  const handleApproveScript = () => {
+    setCurrentState('results');
   };
 
   const handleRestart = () => {
@@ -82,6 +114,8 @@ function App() {
     setEventDescription('');
     setUserPhoto(null);
     setEventPhotos([]);
+    setGeneratedScript('');
+    setIsEditingScript(false);
   };
 
   // If needed later: utility to remove an event photo by index
@@ -370,6 +404,65 @@ function App() {
 
                 <h3 className="text-xl font-semibold text-white mb-2">AI is Working Its Magic</h3>
                 <p className="text-gray-300 text-sm">Analyzing your photos and recreating the perfect moment...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Script Review State */}
+          {currentState === 'script' && (
+            <div className="max-w-4xl mx-auto px-6 py-8">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+                  <FileText className="h-8 w-8 text-cyan-400" />
+                  Script Review
+                </h3>
+                <p className="text-gray-300">Review or edit the generated script before creating your video.</p>
+              </div>
+
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-gray-300 text-sm">Draft based on your inputs</span>
+                  <button
+                    onClick={handleToggleEdit}
+                    className="py-2 px-3 bg-white/10 border border-white/20 rounded-lg text-white font-medium hover:bg-white/20 transition-all duration-200 flex items-center gap-2 text-sm"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {isEditingScript ? 'Done Editing' : 'Edit Script'}
+                  </button>
+                </div>
+
+                {isEditingScript ? (
+                  <textarea
+                    value={generatedScript}
+                    onChange={(e) => setGeneratedScript(e.target.value)}
+                    className="w-full min-h-[220px] px-4 py-3 bg-black/30 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all duration-200"
+                  />
+                ) : (
+                  <pre className="whitespace-pre-wrap text-gray-100 bg-black/30 border border-white/10 rounded-xl p-4 min-h-[220px]">
+                    {generatedScript}
+                  </pre>
+                )}
+
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <button
+                    onClick={handleRegenerateScript}
+                    className="py-3 bg-white/10 border border-white/20 rounded-xl text-white font-semibold hover:bg-white/20 transition-all duration-200"
+                  >
+                    Generate Another
+                  </button>
+                  <button
+                    onClick={handleRestart}
+                    className="py-3 bg-white/10 border border-white/20 rounded-xl text-white font-semibold hover:bg-white/20 transition-all duration-200"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={handleApproveScript}
+                    className="py-3 bg-gradient-to-r from-cyan-500 to-violet-500 rounded-xl text-white font-semibold hover:from-cyan-400 hover:to-violet-400 transition-all duration-200"
+                  >
+                    Approve & Generate Video
+                  </button>
+                </div>
               </div>
             </div>
           )}
